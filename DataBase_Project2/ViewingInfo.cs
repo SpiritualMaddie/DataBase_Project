@@ -51,7 +51,7 @@ namespace DataBase_Project2
             if (title == "Lärare" | title == "Administratör" | title == "Rektor"
                 | title == "Lokalvårdare" | title == "Specialpedagog")
             {
-                Console.WriteLine("Titel \t\tNamn");
+                Console.WriteLine("Titel \t\tNamn\n");
                 foreach (DataRow drEmpTitel in dataT.Rows)
                 {
                     Console.Write(drEmpTitel["Titel"] + "\t\t");
@@ -189,16 +189,15 @@ namespace DataBase_Project2
         internal void AllGradesLastMonth()
         {
             var currentDate = DateTime.Now;
-            //var dateOnly = currentDate.ToShortDateString();
-            var lastMonth = currentDate.AddMonths(-1);
+            var last2Month = currentDate.AddMonths(-2);
             var gradeInfo = @"
                         SELECT * FROM GradeLists
                         JOIN Students ON StudentID = GradeLists.FK_StudentID
                         JOIN Courses ON CourseCode = GradeLists.FK_CourseCode
-                        WHERE GradeDate > @lastMonth";
+                        WHERE GradeDate > @last2Month";
             var command = new SqlCommand(gradeInfo, sqlCon);
 
-            command.Parameters.AddWithValue("@lastMonth", lastMonth.ToShortDateString());
+            command.Parameters.AddWithValue("@last2Month", last2Month.ToShortDateString());
             sqlDa = new SqlDataAdapter(command);
             dataT = new DataTable();
 
@@ -246,7 +245,7 @@ Betygen kommer att numreras för att få fram ett snittvärde
             Console.WriteLine("\nSnittbetyg \tLängsta/högsta betyget \tKursnamn\n");
             foreach (DataRow drGradesA in dataT.Rows)
             {
-                Console.Write(Math.Round((decimal)drGradesA["AverageGrade"], 2) + "\t\t");
+                Console.Write(drGradesA["AverageGrade"] + "\t\t");
                 Console.Write(drGradesA["LowGrade"] + "  /  ");
                 Console.Write(drGradesA["HighGrade"] + "\t\t\t");
                 Console.Write(drGradesA["CourseName"]);
@@ -261,7 +260,7 @@ Betygen kommer att numreras för att få fram ett snittvärde
             {
 
                 var teachersByDepartment = from e in context.Employees
-                                           where e.Titel == "Lärare"
+                                           where new[] { "Lärare", "Specialpedagog" }.Contains(e.Titel)
                                            group e by e.Department into g
                                            select new { Department = g.Key, NumberOfTeachers = g.Count() };
 
@@ -269,7 +268,7 @@ Betygen kommer att numreras för att få fram ett snittvärde
                 {
                     Console.WriteLine("---------------------------------------------------");
                     Console.WriteLine($"Avdelning: {item.Department}");
-                    Console.WriteLine($"Antal lärare: {item.NumberOfTeachers} st");
+                    Console.WriteLine($"Antal personal: {item.NumberOfTeachers} st");
                 }
             }
         }

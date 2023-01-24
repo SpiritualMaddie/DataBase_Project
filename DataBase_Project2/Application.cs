@@ -106,8 +106,6 @@ namespace DataBase_Project2
                 case 1:
                     Console.Clear();
                     SortStudentsName();
-                    PromptAfterList();
-                    StudentsMenu();
                     break;
                 case 2:
                     Console.Clear();
@@ -130,7 +128,7 @@ namespace DataBase_Project2
         {
             string prompt = $"Betyg-meny.\n";
             string[] options = {
-                "Alla betyg satta senaste månaden", "Snittbetyg & högsta vs lägsta", "Sätt betyg", "Huvudmeny" };
+                "Alla betyg satta senaste 2 mån", "Snittbetyg & högsta vs lägsta", "Sätt betyg", "Huvudmeny" };
             Menu menu = new Menu(prompt, options);
             int menuSelect = menu.Run();
             AddingInfo addingInfo = new AddingInfo();
@@ -194,7 +192,7 @@ namespace DataBase_Project2
             string prompt = $"Välj om du vill sortera studenterna efter för eller efternamn i stigande eller fallande ordning.\n";
             string[] options = {
                 "Förnamn (A-Ö)", "Förnamn (Ö-A)",
-                "Efternamn (A-Ö)", "Efternamn (Ö-A)", "Huvudmeny" };
+                "Efternamn (A-Ö)", "Efternamn (Ö-A)", "Studentmeny" };
             Menu menu = new Menu(prompt, options);
             int menuSelect = menu.Run();
             ViewingInfo viewingInfo = new ViewingInfo();
@@ -226,13 +224,13 @@ namespace DataBase_Project2
                     PromptSort();
                     break;
                 case 4:
-                    Start();
+                    StudentsMenu();
                     break;
             }
         }
         internal void PromptSort()
         {
-            string prompt = $"Vill du se andra sorteringar?\n(Väljer du Nej skickas du tillbaka till huvudmenyn.)\n";
+            string prompt = $"Vill du se andra sorteringar?\n(Väljer du Nej skickas du tillbaka till studentmenyn.)\n";
             string[] options = { "Ja", "Nej" };
             Menu menu = new Menu(prompt, options);
             int menuSelect = menu.Run();
@@ -243,7 +241,7 @@ namespace DataBase_Project2
                     SortStudentsName();
                     break;
                 case 1:
-                    Start();
+                    StudentsMenu();
                     break;
             }
         }

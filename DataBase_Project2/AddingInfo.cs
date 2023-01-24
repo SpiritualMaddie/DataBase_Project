@@ -16,7 +16,6 @@ namespace DataBase_Project2
         // Adds new employee to the database (SQL)
         internal void AddEmployee()
         {
-            string department = "";
             Application app = new Application();
             Console.Clear();
             Console.WriteLine("Här kan du lägga till en ny anställd.");
@@ -24,25 +23,25 @@ namespace DataBase_Project2
             Console.WriteLine("\nPersonnr (ÅÅÅÅMMDD-NNNN):");
             string socialSecNr = NullCheck();
 
-            Console.WriteLine("Förnamn:");
+            Console.WriteLine("\nFörnamn:");
             string inputFirstName = NullCheck();
             string firstName = BigFirstLetter(inputFirstName);
 
-            Console.WriteLine("Efternamn:");
+            Console.WriteLine("\nEfternamn:");
             string inputLastName = NullCheck();
             string lastName = BigFirstLetter(inputLastName);
 
-            Console.WriteLine("Titel:");
+            Console.WriteLine("\nTitel: \n(Lärare, Administratör, Rektor, Lokalvårdare, Specialpedagog)");
             string inputTitle = NullCheck();
             string title = BigFirstLetter(inputTitle);
 
-            Console.WriteLine("Första arbetsdagen (ÅÅÅÅ-MM-DD):");
+            Console.WriteLine("\nFörsta arbetsdagen (ÅÅÅÅ-MM-DD):");
             var firstDayDate = NullCheck();
 
-            Console.WriteLine("Avdelning: \n(Bild, Musik, Foto/Film, Estetiska programmet");
-            Console.WriteLine("(Om ingen specifik avdelning finns, lämna tomt)");
-            string? inputDepartment = Console.ReadLine();
-            department = String.IsNullOrEmpty(inputDepartment) | String.IsNullOrWhiteSpace(inputDepartment) ? inputDepartment = department : inputDepartment = BigFirstLetter(inputDepartment);
+            Console.WriteLine("\nAvdelning: \n(Bild, Musik, Foto/Film, Estetiska programmet");
+            Console.WriteLine("(Om ingen specifik avdelning finns, skriv Ospec)");
+            string inputDepartment = NullCheck();
+            string department = BigFirstLetter(inputDepartment);
 
             var newEmployee = "INSERT INTO Employees (SocialSecurityNr, FirstName, LastName, Titel, FirstDayDate, Department) " +
                 "VALUES (@socialSecNr, @firstName, @lastName, @title, @firstDayDate, @department)";
@@ -72,11 +71,11 @@ namespace DataBase_Project2
             Console.WriteLine("Här kan du lägga till en ny student.");
             Console.WriteLine("\nPersonnr(ÅÅÅÅMMDD-NNNN):");
             var socialSecNr = NullCheck();
-            Console.WriteLine("Förnamn:");
+            Console.WriteLine("\nFörnamn:");
             var firstName = NullCheck();
-            Console.WriteLine("Efternamn:");
+            Console.WriteLine("\nEfternamn:");
             var lastName = NullCheck();
-            Console.WriteLine("Klasskod:\n(ES20C - Bild, ES21B - Foto/Film, ES22A - Musik)");
+            Console.WriteLine("\nKlasskod:\n(ES20C - Bild, ES21B - Foto/Film, ES22A - Musik)");
             var studClassCode = NullCheck().ToUpper();
 
             var newStudent = "INSERT INTO Students (SocialSecurityNr, FirstName, LastName, FK_ClassCode) " +
@@ -101,7 +100,6 @@ namespace DataBase_Project2
         internal void SetGrade()
         {
             Console.Clear();
-            Console.WriteLine("Här kan du lägga till ett nytt betyg.");
             var courseCode = CourseCodeInDbOrNot();
             
             ListOfStudentsCourse(courseCode);
@@ -119,7 +117,7 @@ namespace DataBase_Project2
             Console.WriteLine("\nSkriv in lärarens ID som satt betyget:");
             var employeeID = NullCheck();
 
-            using (sqlCon)
+            using (SqlConnection sqlCon = new SqlConnection("Data Source=BLUEBOX; Initial Catalog=HighSchoolHigh; Integrated Security=true"))
             {
                 sqlCon.Open();
 
@@ -155,12 +153,14 @@ namespace DataBase_Project2
                         // If an exception is thrown, the transaction is automatically rolled back
                         Console.WriteLine("\nNågot gick fel.");
                         Console.WriteLine($"[ Error message: {ex.Message} ]");
-                        Console.WriteLine("\nTryck enter för att komma tillbaka till huvudmenyn");
+                        Console.WriteLine("\n-----------------------------------------------------------------------");
+                        Console.WriteLine("Tryck enter för att komma tillbaka till huvudmenyn");
                         Console.ReadKey();
                     }
                     Application app = new Application();
                     app.Start();
                 }
+                sqlCon.Close();
             }
         }
 
@@ -212,9 +212,10 @@ namespace DataBase_Project2
         {
             while (true)
             {
-                Console.WriteLine("Kurskod:\n(Aktiva kurser: MUHI22, PIANO23, RITA23)");
+                Console.WriteLine("Här kan du lägga till ett nytt betyg.");
+                Console.WriteLine("\nKurskod:\n(Aktiva kurser: MUHI22, PIANO23, RITA23)");
                 var courseCode = NullCheck().ToUpper();
-                using (sqlCon)
+                using (SqlConnection sqlCon = new SqlConnection("Data Source=BLUEBOX; Initial Catalog=HighSchoolHigh; Integrated Security=true"))
                 {
                     sqlCon.Open();
                     string query = "SELECT * FROM CourseLists WHERE FK_CourseCode = @courseCode";
@@ -225,13 +226,15 @@ namespace DataBase_Project2
                         {
                             if (reader.HasRows)
                             {
+                                sqlCon.Close();
                                 return courseCode;
                             }
                             else
                             {
                                 Console.WriteLine("Kurskoden '{0}' finns inte i databasen.", courseCode);
                                 Console.WriteLine("Försök igen.");
-                                Thread.Sleep(1500);
+                                Thread.Sleep(2500);
+                                Console.Clear();
                             }
                         }
                     }
@@ -244,23 +247,35 @@ namespace DataBase_Project2
         {
             Console.WriteLine("\nHär kommer en lista på alla studenter i den kursen:");
             Console.WriteLine("-----------------------------------------------------------------------");
-            var studentCourseList = @"
-                                SELECT FirstName, LastName, StudentID FROM CourseLists                               
-                                JOIN Students ON StudentID = CourseLists.FK_StudentID
-                                WHERE FK_CourseCode = @courseCode";
-            sqlDa = new SqlDataAdapter(studentCourseList, sqlCon);
-            sqlDa.SelectCommand.Parameters.AddWithValue("@courseCode", courseCode);
-            dataT = new DataTable();
-            sqlDa.Fill(dataT);
-
-            Console.WriteLine("Kurskod \tID \t\tNamn\n");
-            foreach (DataRow drStudCourse in dataT.Rows)
+            using (SqlConnection sqlCon = new SqlConnection("Data Source=BLUEBOX; Initial Catalog=HighSchoolHigh; Integrated Security=true"))
             {
-                Console.Write(courseCode + "\t\t");
-                Console.Write(drStudCourse["StudentID"] + "\t\t");
-                Console.Write(drStudCourse["FirstName"] + ", ");
-                Console.Write(drStudCourse["LastName"]);
-                Console.WriteLine();
+                sqlCon.Open();
+                var studentCourseList = @"
+                                    SELECT FirstName, LastName, StudentID FROM CourseLists                               
+                                    JOIN Students ON StudentID = CourseLists.FK_StudentID
+                                    WHERE FK_CourseCode = @courseCode";
+
+                var command = new SqlCommand(studentCourseList, sqlCon);
+
+                command.Parameters.AddWithValue("@courseCode", courseCode);
+                sqlDa = new SqlDataAdapter(command);
+                dataT = new DataTable();
+                //sqlDa = new SqlDataAdapter(studentCourseList, sqlCon);
+                //sqlDa.SelectCommand.Parameters.AddWithValue("@courseCode", courseCode);
+                //dataT = new DataTable();
+                
+                sqlDa.Fill(dataT);
+
+                Console.WriteLine("Kurskod \tID \t\tNamn\n");
+                foreach (DataRow drStudCourse in dataT.Rows)
+                {
+                    Console.Write(courseCode + "\t\t");
+                    Console.Write(drStudCourse["StudentID"] + "\t\t");
+                    Console.Write(drStudCourse["FirstName"] + ", ");
+                    Console.Write(drStudCourse["LastName"]);
+                    Console.WriteLine();
+                }
+                sqlCon.Close();
             }
         }
 
@@ -269,24 +284,29 @@ namespace DataBase_Project2
         {
             Console.WriteLine("\nHär är läraren i den kursen:");
             Console.WriteLine("-----------------------------------------------------------------------");
-            var teacherCourseList = @"
+            using (SqlConnection sqlCon = new SqlConnection("Data Source=BLUEBOX; Initial Catalog=HighSchoolHigh; Integrated Security=true"))
+            {
+                sqlCon.Open();
+                var teacherCourseList = @"
                                 SELECT DISTINCT FirstName, LastName, EmployeeID FROM CourseLists                               
                                 JOIN Employees ON EmployeeID = CourseLists.FK_EmployeeID
                                 WHERE FK_CourseCode = @courseCode";
 
-            sqlDa = new SqlDataAdapter(teacherCourseList, sqlCon);
-            sqlDa.SelectCommand.Parameters.AddWithValue("@courseCode", courseCode);
-            dataT = new DataTable();
-            sqlDa.Fill(dataT);
+                sqlDa = new SqlDataAdapter(teacherCourseList, sqlCon);
+                sqlDa.SelectCommand.Parameters.AddWithValue("@courseCode", courseCode);
+                dataT = new DataTable();
+                sqlDa.Fill(dataT);
 
-            Console.WriteLine("Kurskod \tID \t\tNamn\n");
-            foreach (DataRow drTeachCourse in dataT.Rows)
-            {
-                Console.Write(courseCode + "\t\t");
-                Console.Write(drTeachCourse["EmployeeID"] + "\t\t");
-                Console.Write(drTeachCourse["FirstName"] + ", ");
-                Console.Write(drTeachCourse["LastName"]);
-                Console.WriteLine();
+                Console.WriteLine("Kurskod \tID \t\tNamn\n");
+                foreach (DataRow drTeachCourse in dataT.Rows)
+                {
+                    Console.Write(courseCode + "\t\t");
+                    Console.Write(drTeachCourse["EmployeeID"] + "\t\t");
+                    Console.Write(drTeachCourse["FirstName"] + ", ");
+                    Console.Write(drTeachCourse["LastName"]);
+                    Console.WriteLine();
+                }
+                sqlCon.Close();
             }
         }
     }
